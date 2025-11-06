@@ -1,0 +1,82 @@
+<div class="home-container">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <img src="/logo.png" alt="Logo" class="logo" />
+    </div>
+    <div class="header-center">
+      <h1>Analizador de audio basado en Restnest</h1>
+    </div>
+    <div class="header-right"></div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Audio Upload/Record Area -->
+    <div class="audio-container">
+      <div class="audio-box">
+        <div class="audio-options">
+          <label for="file-input" class="upload-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <span>Subir Audio</span>
+          </label>
+          <input type="file" id="file-input" accept="audio/*" (change)="onFileSelected($event)" style="display: none;" />
+
+          <button 
+            class="record-btn" 
+            [class.recording]="isRecording()"
+            (click)="isRecording() ? stopRecording() : startRecording()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <circle cx="12" cy="12" r="6"></circle>
+            </svg>
+            <span>{{ isRecording() ? 'Detener' : 'Grabar' }}</span>
+          </button>
+        </div>
+
+        @if (isProcessing()) {
+          <div class="processing">
+            <div class="spinner"></div>
+            <p>Procesando audio...</p>
+          </div>
+        }
+      </div>
+
+      <!-- Emotion Faces -->
+      <div class="emotions-container">
+        <div 
+          class="emotion-face" 
+          [class.active]="isEmotionActive('happy')"
+          [class.happy-active]="isEmotionActive('happy')">
+          <span class="emoji">😊</span>
+          <span class="emotion-label">Feliz</span>
+        </div>
+        <div 
+          class="emotion-face" 
+          [class.active]="isEmotionActive('neutral')"
+          [class.neutral-active]="isEmotionActive('neutral')">
+          <span class="emoji">😐</span>
+          <span class="emotion-label">Neutral</span>
+        </div>
+        <div 
+          class="emotion-face" 
+          [class.active]="isEmotionActive('angry')"
+          [class.angry-active]="isEmotionActive('angry')">
+          <span class="emoji">😠</span>
+          <span class="emotion-label">Enojado</span>
+        </div>
+      </div>
+
+      <!-- Agent Suggestion -->
+      @if (selectedEmotion()) {
+        <div class="agent-suggestion">
+          <p>{{ getAgentSuggestion(selectedEmotion()) }}</p>
+        </div>
+      }
+    </div>
+  </main>
+</div>
