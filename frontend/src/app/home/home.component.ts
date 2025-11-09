@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AudioClassificationService, ClassificationResult } from '../services/audio-classification.service';
 
-type Emotion = 'happy' | 'neutral' | 'angry' | null;
+type Priority = 'ALTA' | 'MEDIA' | 'BAJA' | null;
 
 @Component({
   selector: 'app-home',
@@ -13,7 +13,7 @@ type Emotion = 'happy' | 'neutral' | 'angry' | null;
   styleUrl: './home.component.scss'
 })
 export class HomeComponent {
-  selectedEmotion = signal<Emotion>(null);
+  selectedPriority = signal<Priority>(null);
   isProcessing = signal<boolean>(false);
   isRecording = signal<boolean>(false);
   mediaRecorder: MediaRecorder | null = null;
@@ -68,11 +68,11 @@ export class HomeComponent {
 
   processAudio(file: File): void {
     this.isProcessing.set(true);
-    this.selectedEmotion.set(null);
+    this.selectedPriority.set(null);
 
     this.audioService.classifyAudio(file).subscribe({
       next: (result: ClassificationResult) => {
-        this.selectedEmotion.set(result.emotion);
+        this.selectedPriority.set(result.priority);
         this.isProcessing.set(false);
       },
       error: (error) => {
@@ -86,53 +86,53 @@ export class HomeComponent {
 
   // Método temporal para simular la clasificación si el backend no está disponible
   simulateClassification(): void {
-    const emotions: Emotion[] = ['happy', 'neutral', 'angry'];
-    const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+    const priorities: Priority[] = ['ALTA', 'MEDIA', 'BAJA'];
+    const randomPriority = priorities[Math.floor(Math.random() * priorities.length)];
     setTimeout(() => {
-      this.selectedEmotion.set(randomEmotion);
+      this.selectedPriority.set(randomPriority);
     }, 1500);
   }
 
-  getEmotionIcon(emotion: Emotion): string {
-    switch (emotion) {
-      case 'happy':
-        return '😊';
-      case 'neutral':
-        return '😐';
-      case 'angry':
+  getPriorityIcon(priority: Priority): string {
+    switch (priority) {
+      case 'ALTA':
         return '😠';
+      case 'MEDIA':
+        return '😐';
+      case 'BAJA':
+        return '😊';
       default:
         return '😐';
     }
   }
 
-  getEmotionText(emotion: Emotion): string {
-    switch (emotion) {
-      case 'happy':
-        return 'Feliz';
-      case 'neutral':
-        return 'Neutral';
-      case 'angry':
-        return 'Enojado';
+  getPriorityText(priority: Priority): string {
+    switch (priority) {
+      case 'ALTA':
+        return 'ALTA';
+      case 'MEDIA':
+        return 'MEDIA';
+      case 'BAJA':
+        return 'BAJA';
       default:
         return '';
     }
   }
 
-  getAgentSuggestion(emotion: Emotion): string {
-    switch (emotion) {
-      case 'happy':
-        return 'Se sugiere derivar a un agente especializado en atención al cliente feliz';
-      case 'neutral':
-        return 'Se sugiere derivar a un agente de atención estándar';
-      case 'angry':
+  getAgentSuggestion(priority: Priority): string {
+    switch (priority) {
+      case 'ALTA':
         return 'Se sugiere derivar a un agente especializado en resolución de conflictos';
+      case 'MEDIA':
+        return 'Se sugiere derivar a un agente de atención estándar';
+      case 'BAJA':
+        return 'Se sugiere derivar a un agente especializado en atención al cliente feliz';
       default:
         return '';
     }
   }
 
-  isEmotionActive(emotion: Emotion): boolean {
-    return this.selectedEmotion() === emotion;
+  isPriorityActive(priority: Priority): boolean {
+    return this.selectedPriority() === priority;
   }
 }

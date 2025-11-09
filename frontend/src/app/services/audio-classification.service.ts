@@ -4,7 +4,9 @@ import { Observable, catchError, throwError } from 'rxjs';
 
 export interface ClassificationResult {
   emotion: 'happy' | 'neutral' | 'angry';
+  priority: 'ALTA' | 'MEDIA' | 'BAJA';
   confidence?: number;
+  emotion_str?: string;
 }
 
 @Injectable({

@@ -46,35 +46,35 @@
         }
       </div>
 
-      <!-- Emotion Faces -->
+      <!-- Priority Faces -->
       <div class="emotions-container">
         <div 
           class="emotion-face" 
-          [class.active]="isEmotionActive('happy')"
-          [class.happy-active]="isEmotionActive('happy')">
-          <span class="emoji">😊</span>
-          <span class="emotion-label">Feliz</span>
-        </div>
-        <div 
-          class="emotion-face" 
-          [class.active]="isEmotionActive('neutral')"
-          [class.neutral-active]="isEmotionActive('neutral')">
-          <span class="emoji">😐</span>
-          <span class="emotion-label">Neutral</span>
-        </div>
-        <div 
-          class="emotion-face" 
-          [class.active]="isEmotionActive('angry')"
-          [class.angry-active]="isEmotionActive('angry')">
+          [class.active]="isPriorityActive('ALTA')"
+          [class.alta-active]="isPriorityActive('ALTA')">
           <span class="emoji">😠</span>
-          <span class="emotion-label">Enojado</span>
+          <span class="emotion-label">ALTA</span>
+        </div>
+        <div 
+          class="emotion-face" 
+          [class.active]="isPriorityActive('MEDIA')"
+          [class.media-active]="isPriorityActive('MEDIA')">
+          <span class="emoji">😐</span>
+          <span class="emotion-label">MEDIA</span>
+        </div>
+        <div 
+          class="emotion-face" 
+          [class.active]="isPriorityActive('BAJA')"
+          [class.baja-active]="isPriorityActive('BAJA')">
+          <span class="emoji">😊</span>
+          <span class="emotion-label">BAJA</span>
         </div>
       </div>
 
       <!-- Agent Suggestion -->
-      @if (selectedEmotion()) {
+      @if (selectedPriority()) {
         <div class="agent-suggestion">
-          <p>{{ getAgentSuggestion(selectedEmotion()) }}</p>
+          <p>{{ getAgentSuggestion(selectedPriority()) }}</p>
         </div>
       }
     </div>

@@ -208,16 +208,16 @@
       text-shadow: none;
     }
 
-    &.happy-active {
-      background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+    &.alta-active {
+      background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
     }
 
-    &.neutral-active {
+    &.media-active {
       background: linear-gradient(135deg, #dfe6e9 0%, #b2bec3 100%);
     }
 
-    &.angry-active {
-      background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+    &.baja-active {
+      background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
     }
   }
 }

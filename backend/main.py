@@ -20,15 +20,96 @@ app.add_middleware(
 )
 
 # Get the correct path to the model
-BASE_DIR = Path(__file__).parent
+BASE_DIR = Path(__file__).parent.absolute()
 MODEL_PATH = BASE_DIR.parent / "model" / "contact_center_model.pkl"
 
 # Cargar el modelo al iniciar la app
+learn_inf = None
+model_load_error = None
+model_load_traceback = None
+
 try:
-    learn_inf = load_learner(MODEL_PATH)
-    print(f"Modelo cargado exitosamente desde: {MODEL_PATH}")
+    # Convertir a ruta absoluta y string
+    model_path_str = str(MODEL_PATH.absolute())
+    
+    # Verificar que el archivo existe
+    if not MODEL_PATH.exists():
+        error_msg = f"ERROR: El archivo del modelo no existe en: {model_path_str}"
+        model_load_error = error_msg
+    else:
+        
+        # Intentar cargar el modelo con la ruta como string
+        import sys
+        import traceback as tb_module
+        import pathlib
+        import pickle
+        from pathlib import WindowsPath
+        
+        try:
+            # Monkey-patch para convertir PosixPath a WindowsPath durante la deserialización
+            # Esto es necesario porque el modelo fue entrenado en Linux pero se carga en Windows
+            # Creamos una clase compatible que herede de WindowsPath
+            class PosixPathCompat(WindowsPath):
+                pass
+            
+            # Hacer el patch en el módulo pathlib antes de que pickle lo necesite
+            # Guardar el valor original si existe
+            original_posix_path = None
+            if hasattr(pathlib, 'PosixPath'):
+                try:
+                    original_posix_path = pathlib.PosixPath
+                except (AttributeError, OSError):
+                    # PosixPath no está disponible en Windows, eso está bien
+                    pass
+            
+            # Reemplazar PosixPath en el módulo pathlib
+            pathlib.PosixPath = PosixPathCompat
+            
+            # También hacer el patch en sys.modules para que pickle lo encuentre
+            if 'pathlib' in sys.modules:
+                sys.modules['pathlib'].PosixPath = PosixPathCompat
+            
+            try:
+                learn_inf = load_learner(model_path_str)
+            finally:
+                # Restaurar PosixPath original si existía
+                if original_posix_path is not None:
+                    pathlib.PosixPath = original_posix_path
+                    if 'pathlib' in sys.modules:
+                        sys.modules['pathlib'].PosixPath = original_posix_path
+                else:
+                    # Si no existía, intentar eliminarlo
+                    try:
+                        if hasattr(pathlib, 'PosixPath'):
+                            delattr(pathlib, 'PosixPath')
+                        if 'pathlib' in sys.modules and hasattr(sys.modules['pathlib'], 'PosixPath'):
+                            delattr(sys.modules['pathlib'], 'PosixPath')
+                    except:
+                        pass
+                
+        except Exception as load_error:
+            # Asegurarse de restaurar PosixPath original incluso si hay error
+            if 'original_posix_path' in locals() and original_posix_path is not None:
+                try:
+                    pathlib.PosixPath = original_posix_path
+                    if 'pathlib' in sys.modules:
+                        sys.modules['pathlib'].PosixPath = original_posix_path
+                except:
+                    pass
+            
+            model_load_error = f"{type(load_error).__name__}: {str(load_error)}"
+            model_load_traceback = ''.join(tb_module.format_exception(type(load_error), load_error, load_error.__traceback__))
+            learn_inf = None
+            
+except FileNotFoundError as e:
+    model_load_error = f"FileNotFoundError: {str(e)}"
+    import traceback
+    model_load_traceback = ''.join(traceback.format_exc())
+    learn_inf = None
 except Exception as e:
-    print(f"Error al cargar el modelo: {e}")
+    model_load_error = f"{type(e).__name__}: {str(e)}"
+    import traceback
+    model_load_traceback = ''.join(traceback.format_exc())
     learn_inf = None
 
 # Replicar tu función de prioridad
@@ -45,9 +126,9 @@ def map_emotion_to_frontend(emotion: str) -> str:
     emotion_lower = emotion.lower()
     if emotion_lower in ['happy', 'happiness']:
         return 'happy'
-    elif emotion_lower in ['neutral']:
+    elif emotion_lower in ['neutral', "calm", "surprised"]:
         return 'neutral'
-    elif emotion_lower in ['angry', 'anger']:
+    elif emotion_lower in ['angry', "sad", "fearful", "disgust"]:
         return 'angry'
     else:
         # Default to neutral for unknown emotions
@@ -57,7 +138,18 @@ def map_emotion_to_frontend(emotion: str) -> str:
 @app.post("/api/classify-audio")
 async def predict(audio: UploadFile = File(...)):
     if learn_inf is None:
-        raise HTTPException(status_code=500, detail="Modelo no disponible")
+        error_detail = {
+            "error": "Modelo no disponible",
+            "model_path": str(MODEL_PATH.absolute()),
+            "model_exists": MODEL_PATH.exists(),
+            "model_loaded": False
+        }
+        
+        if model_load_error:
+            error_detail["load_error"] = model_load_error
+            error_detail["load_traceback"] = model_load_traceback
+        
+        raise HTTPException(status_code=500, detail=error_detail)
     
     temp_file_path = None
     try:
@@ -92,16 +184,16 @@ async def predict(audio: UploadFile = File(...)):
 
         return {
             "emotion": mapped_emotion,
+            "emotion_str": emotion_str,
             "priority": get_priority(emotion_str),
             "confidence": confidence
         }
     except Exception as e:
-        print(f"Error al procesar audio: {e}")
         raise HTTPException(status_code=500, detail=f"Error al procesar audio: {str(e)}")
     finally:
         # Clean up temporary file
         if temp_file_path and os.path.exists(temp_file_path):
             try:
                 os.remove(temp_file_path)
-            except Exception as e:
-                print(f"Error al eliminar archivo temporal: {e}")
+            except Exception:
+                pass
